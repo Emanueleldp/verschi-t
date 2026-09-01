@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Buchstabenspiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f2ede1;
+    --paper-line:#d8cdb4;
+    --ink:#26241f;
+    --ink-soft:#6b6656;
+    --red:#b3462c;
+    --green:#4c6b4f;
+    --card:#fffdf7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(var(--paper) 0px, var(--paper) 31px, var(--paper-line) 32px);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+  .wrap{max-width:720px; margin:0 auto;}
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:700; margin:0;}
+  h1{font-size:clamp(28px,6vw,40px); letter-spacing:-0.01em;}
+  .lede{color:var(--ink-soft); font-size:14px; margin-top:6px; line-height:1.5;}
+  .card{
+    background:var(--card);
+    border:1px solid var(--ink);
+    box-shadow:4px 4px 0 var(--ink);
+    border-radius:2px;
+    padding:22px;
+    margin-top:20px;
+  }
+  label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+  input[type=text], input[type=number]{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    padding:10px 12px;
+    border:1px solid var(--ink);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--red); outline-offset:1px;}
+  button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:500;
+    padding:11px 18px;
+    background:var(--ink);
+    color:var(--paper);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    cursor:pointer;
+  }
+  button:hover{background:#000;}
+  button.secondary{background:transparent; color:var(--ink);}
+  button.danger{background:var(--red); border-color:var(--red); color:#fff;}
+  button:disabled{opacity:0.4; cursor:not-allowed;}
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .row > *{flex:1; min-width:120px;}
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:520px){.split{grid-template-columns:1fr;}}
+
+  .roomcode{
+    display:inline-block;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:0.08em;
+    background:var(--ink);
+    color:var(--paper);
+    padding:4px 12px;
+    border-radius:2px;
+  }
+  .top-bar{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  .letter-badge{
+    width:64px; height:64px;
+    border:2px solid var(--ink);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif;
+    font-size:30px; font-weight:700;
+    background:var(--card);
+    flex-shrink:0;
+  }
+  .cat-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 0;
+    border-bottom:1px dashed var(--paper-line);
+  }
+  .cat-row:last-child{border-bottom:none;}
+  .cat-name{width:110px; font-size:13px; color:var(--ink-soft); flex-shrink:0;}
+  select.pts{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    padding:9px 8px;
+    border:1px solid var(--ink);
+    border-radius:2px;
+    background:var(--paper);
+    width:84px;
+    flex-shrink:0;
+  }
+  .cat-manage{display:flex; gap:8px; margin-top:12px;}
+  .cat-manage input{flex:1;}
+  .chip-list{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .chip{
+    font-size:12px;
+    border:1px solid var(--ink-soft);
+    border-radius:20px;
+    padding:4px 10px 4px 12px;
+    display:flex; align-items:center; gap:6px;
+    color:var(--ink-soft);
+  }
+  .chip button{
+    background:none; border:none; color:var(--red); padding:0; font-size:14px; line-height:1;
+    box-shadow:none;
+  }
+  table{width:100%; border-collapse:collapse; margin-top:8px;}
+  th,td{text-align:left; padding:8px 6px; font-size:13px; border-bottom:1px solid var(--paper-line);}
+  th{color:var(--ink-soft); font-weight:500; font-size:11px; text-transform:none;}
+  tr.me{background:rgba(179,70,44,0.06);}
+  .total-num{font-family:'Fraunces', serif; font-weight:700; font-size:22px;}
+  .muted{color:var(--ink-soft); font-size:13px;}
+  .status-dot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--green); margin-right:6px;
+  }
+  .divider{height:1px; background:var(--paper-line); margin:18px 0;}
+  .stop-btn{background:var(--red); border-color:var(--red);}
+  a.leave{color:var(--ink-soft); font-size:12px; text-decoration:underline; cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const LETTERS = "ABCDEFGHIJKLMNOPRSTUVWZ".split("");
+const DEFAULT_CATEGORIES = ["Name","Stadt/Land","Farbe","Beruf","Tier","Spitzname","TV-Show","Firma/Marke"];
+const PTS_OPTIONS = [0,5,10,20];
+
+let state = {
+  screen: "join", // join | room
+  name: "",
+  room: "",
+  data: null,       // shared room data
+  myAnswers: {},    // { category: {text, points} } for the current round, unsaved
+  loading: false,
+  error: ""
+};
+
+function el(html){
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstChild;
+}
+
+function randLetter(){
+  return LETTERS[Math.floor(Math.random()*LETTERS.length)];
+}
+
+async function loadRoom(code){
+  try{
+    const res = await window.storage.get('room:' + code, true);
+    return res ? JSON.parse(res.value) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+async function saveRoom(code, data){
+  await window.storage.set('room:' + code, JSON.stringify(data), true);
+}
+
+function freshRoomData(){
+  return {
+    categories: DEFAULT_CATEGORIES.slice(),
+    round: 1,
+    letter: randLetter(),
+    entries: {}, // { "Round-Name": { category: {text, points} } } keyed by round number + player
+    players: []
+  };
+}
+
+async function createOrJoin(name, code, create){
+  state.loading = true; render();
+  let data = await loadRoom(code);
+  if(!data){
+    if(!create){
+      state.error = "Diesen Raum gibt es noch nicht. Erstelle ihn stattdessen.";
+      state.loading = false; render();
+      return;
+    }
+    data = freshRoomData();
+  }
+  if(!data.players.includes(name)) data.players.push(name);
+  await saveRoom(code, data);
+  state.data = data;
+  state.name = name;
+  state.room = code;
+  state.screen = "room";
+  state.myAnswers = {};
+  state.loading = false;
+  state.error = "";
+  render();
+  startPolling();
+}
+
+let pollTimer = null;
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(state.screen !== "room") return;
+    const fresh = await loadRoom(state.room);
+    if(fresh) { state.data = fresh; render(); }
+  }, 4000);
+}
+
+async function refreshNow(){
+  const fresh = await loadRoom(state.room);
+  if(fresh){ state.data = fresh; render(); }
+}
+
+async function addCategory(catName){
+  if(!catName.trim()) return;
+  const fresh = await loadRoom(state.room) || state.data;
+  if(!fresh.categories.includes(catName)) fresh.categories.push(catName);
+  await saveRoom(state.room, fresh);
+  state.data = fresh; render();
+}
+
+async function removeCategory(catName){
+  const fresh = await loadRoom(state.room) || state.data;
+  fresh.categories = fresh.categories.filter(c => c !== catName);
+  await saveRoom(state.room, fresh);
+  state.data = fresh; render();
+}
+
+async function setLetter(letter){
+  const fresh = await loadRoom(state.room) || state.data;
+  fresh.letter = letter.toUpperCase().slice(0,1) || randLetter();
+  await saveRoom(state.room, fresh);
+  state.data = fresh; render();
+}
+
+async function newRound(){
+  const fresh = await loadRoom(state.room) || state.data;
+  fresh.round = (fresh.round || 1) + 1;
+  fresh.letter = randLetter();
+  await saveRoom(state.room, fresh);
+  state.data = fresh;
+  state.myAnswers = {};
+  render();
+}
+
+async function submitAnswers(){
+  const fresh = await loadRoom(state.room) || state.data;
+  const roundKey = "r" + fresh.round;
+  if(!fresh.entries[roundKey]) fresh.entries[roundKey] = {};
+  fresh.entries[roundKey][state.name] = state.myAnswers;
+  await saveRoom(state.room, fresh);
+  state.data = fresh;
+  render();
+}
+
+function computeScoreboard(data){
+  const totals = {};
+  data.players.forEach(p => totals[p] = 0);
+  Object.values(data.entries || {}).forEach(round => {
+    Object.entries(round).forEach(([player, answers]) => {
+      if(!(player in totals)) totals[player] = 0;
+      Object.values(answers).forEach(a => { totals[player] += (a.points || 0); });
+    });
+  });
+  return totals;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = "";
+  if(state.screen === "join"){
+    app.appendChild(renderJoin());
+  } else {
+    app.appendChild(renderRoom());
+  }
+}
+
+function renderJoin(){
+  const container = el(`
+    <div>
+      <h1>Buchstabenspiel</h1>
+      <p class="lede">Ein Buchstabe, mehrere Kategorien — wer schreibt am schnellsten ein passendes Wort? Erstelle einen Raum und schick den Code an deine Freunde, dann spielt ihr gemeinsam.</p>
+      <div class="card">
+        <label>Dein Name</label>
+        <input type="text" id="in-name" placeholder="z.B. Emanuele" />
+        <div style="height:14px"></div>
+        <label>Raum-Code</label>
+        <input type="text" id="in-code" placeholder="z.B. GARTEN23" style="text-transform:uppercase" />
+        <div class="row" style="margin-top:16px">
+          <button id="btn-create">Raum erstellen</button>
+          <button class="secondary" id="btn-join">Raum beitreten</button>
+        </div>
+        <p class="muted" id="err" style="color:var(--red); margin-top:10px;"></p>
+      </div>
+    </div>
+  `);
+  const nameInput = container.querySelector('#in-name');
+  const codeInput = container.querySelector('#in-code');
+  const err = container.querySelector('#err');
+  if(state.error) err.textContent = state.error;
+
+  container.querySelector('#btn-create').addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    let code = codeInput.value.trim().toUpperCase();
+    if(!code) code = Math.random().toString(36).slice(2,7).toUpperCase();
+    if(!name){ err.textContent = "Bitte gib deinen Namen ein."; return; }
+    createOrJoin(name, code, true);
+  });
+  container.querySelector('#btn-join').addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    const code = codeInput.value.trim().toUpperCase();
+    if(!name || !code){ err.textContent = "Name und Raum-Code werden benötigt."; return; }
+    createOrJoin(name, code, false);
+  });
+  return container;
+}
+
+function renderRoom(){
+  const data = state.data;
+  const scoreboard = computeScoreboard(data);
+  const roundKey = "r" + data.round;
+  const savedAnswer = (data.entries[roundKey] && data.entries[roundKey][state.name]) || null;
+
+  const container = el(`
+    <div>
+      <div class="top-bar">
+        <div>
+          <h1>Buchstabenspiel</h1>
+          <p class="lede"><span class="status-dot"></span>Raum <span class="roomcode">${data_room_code()}</span> &nbsp;·&nbsp; Runde ${data.round} &nbsp;·&nbsp; ${data.players.length} Spieler</p>
+        </div>
+        <div class="letter-badge">${escapeHtml(data.letter)}</div>
+      </div>
+
+      <div class="card">
+        <div class="top-bar" style="align-items:center;">
+          <h3>Runde ${data.round} — Buchstabe ${escapeHtml(data.letter)}</h3>
+          <div class="row" style="max-width:260px;">
+            <button class="secondary" id="btn-refresh">Aktualisieren</button>
+          </div>
+        </div>
+        <div id="cats"></div>
+        <div class="row" style="margin-top:18px;">
+          <button id="btn-submit">Antworten abschicken ${savedAnswer ? "(aktualisieren)" : ""}</button>
+        </div>
+        ${savedAnswer ? '<p class="muted" style="margin-top:8px;">Du hast diese Runde schon eingereicht — erneutes Abschicken überschreibt deine Antworten.</p>' : ''}
+      </div>
+
+      <div class="card">
+        <h3>Kategorien verwalten</h3>
+        <div class="chip-list" id="chip-list"></div>
+        <div class="cat-manage">
+          <input type="text" id="new-cat" placeholder="Neue Kategorie..." />
+          <button class="secondary" id="btn-addcat">Hinzufügen</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top-bar" style="align-items:center;">
+          <h3>Nächste Runde</h3>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div>
+            <label>Buchstabe manuell setzen (optional)</label>
+            <input type="text" id="manual-letter" maxlength="1" placeholder="z.B. M" />
+          </div>
+          <button id="btn-setletter" class="secondary">Übernehmen</button>
+        </div>
+        <div class="divider"></div>
+        <button id="btn-newround" class="stop-btn">Neue Runde starten (zufälliger Buchstabe)</button>
+      </div>
+
+      <div class="card">
+        <h3>Punktestand</h3>
+        <table>
+          <thead><tr><th>Spieler</th><th>Punkte</th></tr></thead>
+          <tbody id="score-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Antworten dieser Runde</h3>
+        <div id="round-answers"></div>
+      </div>
+
+      <p style="margin-top:20px;"><a class="leave" id="leave-link">Raum verlassen</a></p>
+    </div>
+  `);
+
+  function data_room_code(){ return state.room; }
+
+  // categories inputs
+  const catsWrap = container.querySelector('#cats');
+  data.categories.forEach(cat => {
+    const prev = state.myAnswers[cat] || (savedAnswer ? savedAnswer[cat] : null) || {text:"", points:0};
+    const row = el(`
+      <div class="cat-row">
+        <div class="cat-name">${escapeHtml(cat)}</div>
+        <input type="text" class="ans-input" data-cat="${escapeHtml(cat)}" placeholder="Antwort" value="${escapeHtml(prev.text || '')}" />
+        <select class="pts" data-cat="${escapeHtml(cat)}">
+          ${PTS_OPTIONS.map(p => `<option value="${p}" ${p===(prev.points||0) ? 'selected' : ''}>${p===0 ? '- Pkt -' : p+' Pkt'}</option>`).join('')}
+        </select>
+      </div>
+    `);
+    catsWrap.appendChild(row);
+  });
+  catsWrap.querySelectorAll('.ans-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const cat = inp.dataset.cat;
+      if(!state.myAnswers[cat]) state.myAnswers[cat] = {text:"", points:0};
+      state.myAnswers[cat].text = inp.value;
+    });
+  });
+  catsWrap.querySelectorAll('.pts').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const cat = sel.dataset.cat;
+      if(!state.myAnswers[cat]) state.myAnswers[cat] = {text:"", points:0};
+      state.myAnswers[cat].points = parseInt(sel.value,10) || 0;
+    });
+  });
+
+  // chips
+  const chipList = container.querySelector('#chip-list');
+  data.categories.forEach(cat => {
+    const chip = el(`<span class="chip">${escapeHtml(cat)} <button data-cat="${escapeHtml(cat)}">×</button></span>`);
+    chip.querySelector('button').addEventListener('click', () => removeCategory(cat));
+    chipList.appendChild(chip);
+  });
+  container.querySelector('#btn-addcat').addEventListener('click', () => {
+    const input = container.querySelector('#new-cat');
+    addCategory(input.value.trim());
+    input.value = "";
+  });
+
+  // scoreboard
+  const scoreBody = container.querySelector('#score-body');
+  Object.entries(scoreboard).sort((a,b) => b[1]-a[1]).forEach(([player, pts]) => {
+    const tr = el(`<tr class="${player===state.name ? 'me' : ''}"><td>${escapeHtml(player)}${player===state.name ? ' (du)' : ''}</td><td class="total-num">${pts}</td></tr>`);
+    scoreBody.appendChild(tr);
+  });
+  if(Object.keys(scoreboard).length === 0){
+    scoreBody.appendChild(el(`<tr><td colspan="2" class="muted">Noch keine Punkte.</td></tr>`));
+  }
+
+  // round answers overview
+  const roundAnswersWrap = container.querySelector('#round-answers');
+  const thisRound = data.entries[roundKey] || {};
+  if(Object.keys(thisRound).length === 0){
+    roundAnswersWrap.appendChild(el(`<p class="muted">Noch niemand hat für diese Runde abgeschickt.</p>`));
+  } else {
+    const tbl = el(`<table><thead><tr><th>Spieler</th>${data.categories.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody></tbody></table>`);
+    const tbody = tbl.querySelector('tbody');
+    Object.entries(thisRound).forEach(([player, answers]) => {
+      const tr = el(`<tr class="${player===state.name?'me':''}"><td>${escapeHtml(player)}</td>${data.categories.map(c => {
+        const a = answers[c];
+        return `<td>${a && a.text ? escapeHtml(a.text) : '<span class="muted">–</span>'} ${a && a.points ? '('+a.points+')' : ''}</td>`;
+      }).join('')}</tr>`);
+      tbody.appendChild(tr);
+    });
+    roundAnswersWrap.appendChild(tbl);
+  }
+
+  container.querySelector('#btn-submit').addEventListener('click', submitAnswers);
+  container.querySelector('#btn-refresh').addEventListener('click', refreshNow);
+  container.querySelector('#btn-newround').addEventListener('click', newRound);
+  container.querySelector('#btn-setletter').addEventListener('click', () => {
+    const v = container.querySelector('#manual-letter').value;
+    if(v.trim()) setLetter(v);
+  });
+  container.querySelector('#leave-link').addEventListener('click', () => {
+    if(pollTimer) clearInterval(pollTimer);
+    state.screen = "join";
+    state.data = null;
+    render();
+  });
+
+  return container;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+render();
+</script>
+</body>
+</html>
